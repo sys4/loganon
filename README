@@ -1,0 +1,35 @@
+= Loganon
+
+loganon is a generic log anonymizer. It expects an input, an output and a rules
+file. A rules file contains search and replace patterns (regular expresssions).
+
+This repository contains 'loganon', the command to anonymize log files. It also
+contains `loganon.sh` a script to be called from a logrotate configuration and
+an example rules file `mail.rules` (for Postfix and Dovecot).
+
+== Contributions welcome!
+
+Each programm has its own way of logging. If you use 'loganon' and if you create
+a rule file for an application 'loganon' doesn't cover yet, consider to
+contribute it. Each contribution makes 'loganon' more useful.
+
+== License
+
+loganon is free software: you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+ 
+loganon is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+ 
+You should have received a copy of the GNU Lesser General Public License
+along with loganon. If not, see <http://www.gnu.org/licenses/>.
+
+== Copyright
+
+Copyright sys4 AG <https://sys4.de> 2015
+
+// vim: set ft=asciidoc:

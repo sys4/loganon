@@ -1,0 +1,68 @@
+loganon(1)
+==========
+:doctype: manpage
+:man source:   loganon
+:man version:  0.1
+:man manual:   loganon Manual
+
+NAME
+----
+loganon - anonymize log files
+
+SYNOPSIS
+--------
+*loganon* '-i inputfile' '-r rulefile' '-o outputfile' ['-4 xx'] ['-6 xx'] ['-t']
+
+
+DESCRIPTION
+-----------
+
+loganon is a log anonymizer. It takes log lines from an input file, processes
+them with search and replace patterns from a rules file and sends the result to
+an output file.
+
+OPTIONS
+-------
+
+`-i, --input=file` (mandatory)::
+    Name of the file to read input from.
+
+`-o, --output=file` (manatory)::
+    Name of the file to write anonymized output to.
+
+`-r, --rules=file1,file2,...` (mandatory)::
+    Name of one or more rule files containing search and replace patterns for log anonymization.
+
+`-4, --mask4=number` (optional)::
+    Number of bits to mask an IPv4 address.
+
+`-6, --mask6=number` (optional)::
+    Number of bits to mask an IPv6 address.
+
+`-t, --test` (optional)::
+    Test pattern and print output to stdout
+
+BUGS
+----
+
+Please submit BUGS to <https://github.com/sys4/loganon/issues>.
+
+
+AUTHOR
+------
+
+Christian Roessner <cr@sys4.de> wrote the program. Patrick Ben Koetter <p@sys4.de> wrote this man page.
+
+
+RESOURCES
+---------
+
+loganons home is at <https://github.com/sys4/loganon>.
+
+
+COPYING
+-------
+
+Copyright \(C) 2015 sys4 AG. Free use of this software is granted under the terms of the GNU Lesser General Public License (GLPL).
+
+// vim: set ft=asciidoc:

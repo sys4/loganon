@@ -1,0 +1,269 @@
+#!/usr/bin/env python
+
+# copyright sys4 AG 2015
+
+# This file is part of loganon.
+# 
+# loganon is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+# 
+# loganon is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public License
+# along with loganon. If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import sys
+import re
+import yaml
+
+from getopt import getopt
+from netaddr import IPAddress, IPNetwork
+from netaddr.core import AddrFormatError
+
+try:
+    from collections import OrderedDict
+except:
+    from ordereddict import OrderedDict
+
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+    """Force YAML parser to use OrderedDict instead of dict()
+    """
+    class OrderedLoader(Loader):
+        pass
+
+    OrderedLoader.add_constructor(
+        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+        lambda loader, node: object_pairs_hook(loader.construct_pairs(node)))
+
+    return yaml.load(stream, OrderedLoader)
+
+def usage():
+    """Print a simple usage to stdout
+    """
+    print """%s [options]
+
+-h, --help                  prints out this help
+-i, --input=file            log file to read
+-o, --output=file           output result to this file
+-r, --rules=file1,file2,... comma seperated list of rule files
+
+Optional:
+
+-4, --mask4=number          number of bits to mask an IPv4 address
+-6, --mask6=number          number of bits to mask an IPv6 address
+
+-t, --test                  test pattern and print output to stdout
+    """ % os.path.basename(__file__)
+
+def main():
+    """Main application
+    """
+    # input file argument
+    fdinarg = None
+
+    # output file argument
+    fdoutarg = None
+
+    # A list of file names containing rule YAML definitions
+    rules = None
+
+    # Test mode
+    test = False
+
+    # A list of YAML parsed structures
+    rules_collection = list()
+
+    # Data structure for search and replace actions
+    rule_data = OrderedDict()
+
+    # Default IPv4 bit mask
+    bitmask4 = IPAddress("255.255.0.0")
+
+    # Default IPv6 bit mask
+    bitmask6 = IPAddress("ffff:ffff:ff00::")
+
+    # Pre-compile IPv4/IPv6 pattern
+    ipv4 = re.compile("[1-9][0-9]{0,2}\.[0-9.]{3,7}\.[0-9]{1,3}")
+    ipv6 = re.compile("([1-9a-fA-F][0-9a-fA-F]{3}):"
+                      "[0-9a-fA-F:]{2,29}[0-9a-fA-F]{1,4}")
+
+    # Read command line options
+    try:
+        opts = getopt(sys.argv[1:],
+                      "hi:o:r:4:6:t",
+                      ["help",
+                      "input=",
+                      "output=",
+                      "rules=",
+                      "mask4=",
+                      "mask6=",
+                      "test"])[0]
+
+        for opt, optarg in opts:
+            if opt in ("-h", "--help"):
+                usage()
+                sys.exit()
+            elif opt in ("-i", "--input"):
+                fdinarg = str(optarg)
+            elif opt in ("-o", "--output"):
+                fdoutarg = str(optarg)
+            elif opt in ("-r", "--rules"):
+                rules = str(optarg).split(",")
+            elif opt in ("-4", "--mask4"):
+                bitmask4 = IPNetwork("0.0.0.0/%i" % int(optarg)).netmask
+            elif opt in ("-6", "--mask6"):
+                bitmask6 = IPNetwork("::/%i" % int(optarg)).netmask
+            elif opt in ("-t", "--test"):
+                test = True
+            else:
+                usage()
+                sys.exit(os.EX_USAGE)
+
+        # Required: input file and pattern
+        if fdinarg is None or rules is None:
+            usage()
+            sys.exit(os.EX_USAGE)
+
+        # If we are not in test mode, an output file is required
+        if test is False and fdoutarg is None:
+            usage()
+            sys.exit(os.EX_USAGE)
+
+    except Exception, e:
+        print >> sys.stderr, "Syntax error: %s" % e
+        sys.exit(os.EX_USAGE)
+    
+    # Read all rules
+    try:
+        for rule in iter(rules):
+            with open(rule, "r") as fd_rule:
+                rules_collection.append(ordered_load(fd_rule,
+                                        yaml.SafeLoader,
+                                        OrderedDict))
+
+    except IOError, e:
+        print >> sys.stderr, "IOError: %s" % e
+        sys.exit(os.EX_IOERR)
+
+    except Exception, e:
+        print >> sys.stderr, "Unknown error: %s" % e
+        sys.exit(os.EX_USAGE)
+    
+    # Build macro dictionary
+    for rule_entity in iter(rules_collection):
+        for service, ruledef in rule_entity.iteritems():
+            for rulename, rulepattern in ruledef.iteritems():
+                search = None
+                replace = None
+                for patterndef in iter(rulepattern):
+                    for actiondesc, actiondef in patterndef.iteritems():
+                        if actiondesc == "search":
+                            search = actiondef
+                        if actiondesc == "replace":
+                            replace = actiondef
+                if search is None:
+                    print >> sys.stderr, "Missing <search> tag"
+                    sys.exit(os.EX_USAGE)
+                if replace is None:
+                    print >> sys.stderr, "Missing <replace> tag"
+                    sys.exit(os.EX_USAGE)
+                try:
+                    rule_data[rulename] = (re.compile(search), replace)
+                except Exception, e:
+                    print >> sys.stderr, ("Syntax error in <search> or "
+                                          "<replace> pattern: %s" % e)
+                    sys.exit(os.EX_USAGE)
+
+    # Open input and output files
+    try:
+        fd_in = open(fdinarg, "r")
+        if not test:
+            fd_out = open(fdoutarg, "w")
+
+    except IOError, e:
+        print >> sys.stderr, "IOError: %s" % e
+        sys.exit(os.EX_IOERR)
+
+    except Exception, e:
+        print >> sys.stderr, "Unknown error: %s" % e
+        sys.exit(os.EX_USAGE)
+    
+    def reduce_ip(matchobj):
+        maybe_ip = False
+
+        # simple tests
+
+        if matchobj.group(0).startswith("127.0.0."):
+            return matchobj.group(0)
+
+        test = matchobj.group(0).split(".")
+        if len(test) == 4:
+            for octet in iter(test):
+                try:
+                    if (":" in octet or
+                        int(octet) < 0 or int(octet) > 255):
+                        return matchobj.group(0)
+                    else:
+                        maybe_ip = True
+                except ValueError:
+                    return matchobj.group(0)
+        elif len(test) == 1:
+            test = matchobj.group(0).split(":")
+            if len(test) >= 2:
+                maybe_ip = True
+
+        if maybe_ip:
+            try:
+                ip = IPAddress(matchobj.group(0))
+            except AddrFormatError:
+                # might be something else than an IPv6 address
+                return matchobj.group(0)
+
+            if ip.version == 4:
+                return str(bitmask4 & ip)
+            else:
+                return str(bitmask6 & ip)
+
+            return str(ip)
+
+        else:
+            return matchobj.group(0)
+
+    while True:
+        line = fd_in.readline()
+        if not line:
+            break
+
+        # Phase 1 - search and replace pattern
+        for key, value in rule_data.iteritems():
+            try:
+                linenew = value[0].sub(value[1], line)
+                if linenew is not None:
+                    line = linenew
+            except Exception, e:
+                print >> sys.stderr, e
+
+        # Phase 2 - find IPv4/IPv6 address
+        line = re.sub(ipv4, reduce_ip, line)
+        line = re.sub(ipv6, reduce_ip, line)
+        if test:
+            print line.strip()
+        else:
+            fd_out.write(line)
+
+    # Close input and output files
+    fd_in.close()
+    if not test:
+        fd_out.close()
+
+if __name__ == "__main__":
+    main()
+    sys.exit(os.EX_OK)
+
+# vim: ts=4 sw=4 expandtab

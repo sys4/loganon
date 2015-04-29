@@ -1,0 +1,19 @@
+/var/log/mail/mail.log
+/var/log/mail/dovecot.log
+{
+	rotate 14
+	daily
+	missingok
+	notifempty
+	compress
+	compresscmd /usr/bin/bzip2
+	compressoptions -9
+	compressext .bz2
+	dateext
+	delaycompress
+	sharedscripts
+	prerotate
+		/usr/local/sbin/loganon.sh
+	endscript
+}
+

@@ -1,0 +1,38 @@
+# copyright sys4 AG 2015
+
+# This file is part of loganon.
+#
+# loganon is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# loganon is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with loganon. If not, see <http://www.gnu.org/licenses/>.
+
+
+exchange:
+  sender-address:
+    - search: "sender-address:([^@]+)@"
+    - replace: "sender-address:_MAP_@"
+  return-path:
+    - search: "return-path:([^@]+)@"
+    - replace: "return-path:_MAP_@"
+  recipient-address:
+    - search: "recipient-address:([^@]+)@"
+    - replace: "recipient-address:_MAP_@"
+  UserID:
+    - search: "UserID:([^,]+)"
+    - replace: "UserID:_MAP_"
+  AccountName:
+    - search: "AccountName:([^,]+)"
+    - replace: "AccountName:_MAP_"
+  Domain:
+    - search: "Domain:([^,]+)"
+    - replace: "Domain:_MAP_"
+# vim: syn=yaml ts=2 sw=2 expandtab

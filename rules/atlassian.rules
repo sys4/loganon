@@ -1,0 +1,36 @@
+# copyright sys4 AG 2015
+# copyright IAV GmbH 2021
+
+
+# This file is part of loganon.
+#
+# loganon is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option) any
+# later version.
+#
+# loganon is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with loganon. If not, see <http://www.gnu.org/licenses/>.
+
+
+atlassian:
+
+  UserID:
+    - search: "[uU]ser[iI][dD][:=]([^,]+)"
+    - replace: "UserID:_MAP_ "
+  UserFullName:
+    - search: "[uU]ser[fF]ull[nN]ame[:=]([^,]+)"
+    - replace: "userFullName=_MAP_ "
+  UserName:
+    - search: "[uU]ser[nN]ame[:=]([^,]+)"
+    - replace: "UserName:_MAP_ "
+  AccountName:
+    - search: "[aA]ccount[nN]ame[:=]([^,]+)"
+    - replace: "AccountName:_MAP_ "
+
+# vim: syn=yaml ts=2 sw=2 expandtab

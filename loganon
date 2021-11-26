@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # copyright sys4 AG 2015
+# copyright IAV GmbH 2021
 
 # This file is part of loganon.
 #
@@ -63,6 +64,7 @@ Optional:
 
 -4, --mask4=number          number of bits to mask an IPv4 address
 -6, --mask6=number          number of bits to mask an IPv6 address
+-d  --dm_check              check also for dommain names
 
 -t, --test                  test pattern and print output to stdout
     """ % os.path.basename(__file__))
@@ -101,6 +103,9 @@ def main():
     domain = re.compile("([^\s=\"\(\):]*\.)?[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}")
     syslog_prio = re.compile("(auth|cron|daemon|kern|local[0-7]|lpr|mail|news|user|uucp)\.(info|notice|warning|err|alert|warn|debug|emerg|crit)", re.IGNORECASE)
 
+    # Dommain_Check
+    dommain_check = False
+    
     def get_encoding(file):
         blob = open(file, "rb").read()
         m = magic.Magic(mime_encoding=True)
@@ -109,13 +114,14 @@ def main():
     # Read command line options
     try:
         opts = getopt(sys.argv[1:],
-                      "hi:o:r:4:6:t",
+                      "hi:o:r:4:6:dt",
                       ["help",
                       "input=",
                       "output=",
                       "rules=",
                       "mask4=",
                       "mask6=",
+                      "dm_check",
                       "test"])[0]
 
         for opt, optarg in opts:
@@ -132,6 +138,8 @@ def main():
                 bitmask4 = IPNetwork("0.0.0.0/%i" % int(optarg)).netmask
             elif opt in ("-6", "--mask6"):
                 bitmask6 = IPNetwork("::/%i" % int(optarg)).netmask
+            elif opt in ("-d", "--dm_check"):
+                dommain_check = True
             elif opt in ("-t", "--test"):
                 test = True
             else:
@@ -344,9 +352,11 @@ def main():
         line = re.sub(ipv4, map_ip, line)
         line = re.sub(ipv6, reduce_ip, line)
 
-        # Phase 3 - search and replace domains
-        line = re.sub(domain, map_domain, line)
-
+        # Phase 3 - search and replace domains if "-d" switch is set 
+        if dommain_check:
+            line = re.sub(domain, map_domain, line)
+        else:
+            print(line)
         if test:
             print(line.strip())
         else:

@@ -64,7 +64,7 @@ Optional:
 
 -4, --mask4=number          number of bits to mask an IPv4 address
 -6, --mask6=number          number of bits to mask an IPv6 address
--d  --dm_check         check also for dommain names
+-d  --dm_check              check also for dommain names
 
 -t, --test                  test pattern and print output to stdout
     """ % os.path.basename(__file__))
@@ -352,7 +352,7 @@ def main():
         line = re.sub(ipv4, map_ip, line)
         line = re.sub(ipv6, reduce_ip, line)
 
-        # Phase 3 - search and replace domains if "-z" switch is set 
+        # Phase 3 - search and replace domains if "-d" switch is set 
         if dommain_check:
             line = re.sub(domain, map_domain, line)
         else:
